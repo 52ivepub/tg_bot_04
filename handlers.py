@@ -25,10 +25,21 @@ async def start(message: Message, bot: Bot):
     await message.answer(f'<pre> Спойлер </pre>') 
 
 
-# =========ЭХО=========
-@handler.message()
-async def sticker(message: Message, bot: Bot):
+#=============фильтр сработает только на фото с подписью===============
+@handler.message(F.photo, F.caption.lower().contains('hi'))
+async def get_photo(message: Message):
     await message.send_copy(chat_id=message.chat.id)
+
+
+# ====================ЕСЛИ ПИШЕТ АДМИН ТО ОТВЕТИТ=================
+@handler.message(F.from_user.id.in_({35, 1301478301}), F.text.lower().contains('i admin'))
+async def get_photo(message: Message):
+    await message.answer('hi admin')
+
+# =========ЭХО=========
+# @handler.message()
+# async def sticker(message: Message, bot: Bot):i
+#     await message.send_copy(chat_id=message.chat.id)
 
 
 
