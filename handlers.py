@@ -1,6 +1,12 @@
+import io
+from multiprocessing.context import assert_spawning
 from aiogram import F, Bot, Router
+from aiogram import types
+from aiogram.enums import ChatAction
 from aiogram.filters import Command
 from aiogram.types import Message
+from aiogram.utils.chat_action import ChatActionSender
+import aiohttp
 
 
 
@@ -40,6 +46,38 @@ async def get_photo(message: Message):
 # @handler.message()
 # async def sticker(message: Message, bot: Bot):i
 #     await message.send_copy(chat_id=message.chat.id)
+
+
+async def send_big_file(message: Message):
+    file = io.BytesIO()
+    url = 'https://wallpapers.com/images/hd/kitty-pictures-mer7k5p1ryh4ylii.jpg'
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url)  as response:
+            result = await response.read()
+
+    
+    file.write(result)
+    await message.reply_document(
+        document=types.BufferedInputFile(
+            file=file.getvalue(),
+            filename='cat.jpg'
+        )
+    )
+
+
+@handler.message(Command('pic_file'))
+async def send_pic_file(message: Message):
+    await message.bot.send_chat_action(
+        chat_id=message.chat.id,
+        action=ChatAction.UPLOAD_DOCUMENT,
+    )
+    action_sender = ChatActionSender(
+        bot=message.bot,
+        chat_id=message.chat.id,
+        action=ChatAction.UPLOAD_DOCUMENT,
+    )
+    async with action_sender:
+        await send_big_file(message)
 
 
 
