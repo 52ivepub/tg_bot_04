@@ -1,5 +1,7 @@
+import asyncio
 import io
 from multiprocessing.context import assert_spawning
+from socket import PACKET_BROADCAST
 from aiogram import F, Bot, Router
 from aiogram import types
 from aiogram.enums import ChatAction
@@ -7,6 +9,7 @@ from aiogram.filters import Command
 from aiogram.types import Message
 from aiogram.utils.chat_action import ChatActionSender
 import aiohttp
+import emoji
 
 
 
@@ -48,6 +51,9 @@ async def get_photo(message: Message):
 #     await message.send_copy(chat_id=message.chat.id)
 
 
+
+
+# ============= ОТПРАВКА ФАЙЛА===========================
 async def send_big_file(message: Message):
     file = io.BytesIO()
     url = 'https://wallpapers.com/images/hd/kitty-pictures-mer7k5p1ryh4ylii.jpg'
@@ -80,9 +86,43 @@ async def send_pic_file(message: Message):
         await send_big_file(message)
 
 
+# ================================================
 
 
+# ==================ОПТРАВКА ЭМОДЗИ==============================
+def is_emoji(text):
+    if text:
+        return all(char in emoji.EMOJI_DATA for char in text)
 
+
+@handler.message(lambda message: is_emoji(message.text))
+async def choose_emoji(message: Message, bot: Bot):
+    # if is_emoji(message.text):
+    await message.bot.send_chat_action(
+    chat_id=message.chat.id,
+    action=ChatAction.TYPING,
+    )
+    await asyncio.sleep(3)
+    try:
+        await message.send_copy(chat_id=message.chat.id)
+    except:
+        await message.answer('ЧТО ТО НЕ ВЫШЛО')
+
+
+# ===========================================================
+
+
+# =======================ОТПРАВКА СТИКЕРОВ====================================
+
+
+@handler.message(F.sticker)
+async def sticker(message: Message, bot: Bot):
+    await message.bot.send_chat_action(
+    chat_id=message.chat.id,
+    action=ChatAction.CHOOSE_STICKER,
+    )
+    await asyncio.sleep(3)
+    await message.send_copy(chat_id=message.chat.id)
 
 
 
