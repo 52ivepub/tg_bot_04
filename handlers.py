@@ -41,6 +41,16 @@ async def start(message: Message, bot: Bot):
     await message.answer(f"<pre> Спойлер </pre>")
 
 
+@handler.message(Command("help_kb"))
+async def start(message: Message, bot: Bot):
+    await message.answer(f"Вот цифры", reply_markup=keyboards.get_on_help_kb())
+
+
+@handler.message(Command("more"))
+async def start(message: Message, bot: Bot):
+    await message.answer(f"Вот ", reply_markup=keyboards.get_actions_kb())
+    
+
 # =============фильтр сработает только на фото с подписью===============
 @handler.message(F.photo, F.caption.lower().contains("hi"))
 async def get_photo(message: Message):
