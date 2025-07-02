@@ -1,5 +1,5 @@
 import re
-from aiogram.types import KeyboardButton, KeyboardButtonPollType, ReplyKeyboardMarkup, ReplyKeyboardRemove
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, KeyboardButtonPollType, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
 
@@ -56,15 +56,31 @@ def get_on_help_kb():
 
 
 def get_actions_kb():
-    # markup = ReplyKeyboardMarkup(
-
-    # )
     builder = ReplyKeyboardBuilder()
     builder.button(text='location', request_location=True)
     builder.button(text='phone', request_contact=True)
-    builder.button(text='chat', request_chat=True)
     builder.button(text='poll', request_poll=KeyboardButtonPollType())
     builder.button(text='quiz', request_poll=KeyboardButtonPollType(type='quiz'))
     builder.button(text='dinner', request_poll=KeyboardButtonPollType(type='regular'))
+    builder.button(text='отмена')
     builder.adjust(1)
-    return builder.as_markup(resize_keyboard=True)
+    return builder.as_markup(resize_keyboard=True, one_time_keyboard=True)
+
+
+async def build_info_kb():
+    tg = InlineKeyboardButton(
+        text='канал',
+        url='https://novosibirsk.drom.ru/'
+    )
+    tg_01 = InlineKeyboardButton(
+        text='tg',
+        url='https://t.me/ren_13_bot'
+    )
+    rows = [
+        [tg],
+        [tg_01],
+    ]
+    markup = InlineKeyboardMarkup(inline_keyboard=rows)
+    return markup
+
+

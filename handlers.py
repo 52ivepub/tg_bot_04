@@ -4,7 +4,7 @@ from aiogram import F, Bot, Router
 from aiogram import types
 from aiogram.enums import ChatAction
 from aiogram.filters import Command
-from aiogram.types import KeyboardButton, Message, ReplyKeyboardMarkup, ReplyKeyboardRemove
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, Message, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from aiogram.utils.chat_action import ChatActionSender
 import aiohttp
 import emoji
@@ -46,10 +46,12 @@ async def start(message: Message, bot: Bot):
     await message.answer(f"Вот цифры", reply_markup=keyboards.get_on_help_kb())
 
 
+# ================КЛАВИАТУРА С ДЕЙСТВИЯМИ=============================
 @handler.message(Command("more"))
 async def start(message: Message, bot: Bot):
     await message.answer(f"Вот ", reply_markup=keyboards.get_actions_kb())
-    
+# =============================================    
+
 
 # =============фильтр сработает только на фото с подписью===============
 @handler.message(F.photo, F.caption.lower().contains("hi"))
@@ -137,3 +139,11 @@ async def sticker(message: Message, bot: Bot):
     )
     await asyncio.sleep(3)
     await message.send_copy(chat_id=message.chat.id)
+
+
+@handler.message(Command('info'))
+async def handle_info_command(message: Message):
+
+    await message.answer(text='ссылки', reply_markup=keyboards.build_info_kb())
+
+    
