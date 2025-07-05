@@ -6,6 +6,7 @@ cat.jpg
 d09cdc6a359ac10e8ef174b45554b4b6.jpg
 media
 /media
+probe.py
 
 # C extensions
 *.so

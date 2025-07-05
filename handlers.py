@@ -4,7 +4,7 @@ from aiogram import F, Bot, Router
 from aiogram import types
 from aiogram.enums import ChatAction
 from aiogram.filters import Command
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, Message, ReplyKeyboardMarkup, ReplyKeyboardRemove
+from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, Message, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from aiogram.utils.chat_action import ChatActionSender
 import aiohttp
 import emoji
@@ -141,9 +141,34 @@ async def sticker(message: Message, bot: Bot):
     await message.send_copy(chat_id=message.chat.id)
 
 
-@handler.message(Command('info'))
+# ===============INLINE================
+@handler.message(Command('callback'))
 async def handle_info_command(message: Message):
-
-    await message.answer(text='ссылки', reply_markup=keyboards.build_info_kb())
-
+    await message.answer(text='ссылки', reply_markup=keyboards.build_adtions_kb())
+# ===========================================================
     
+
+# ====================CALLBACK===========================================
+
+@handler.callback_query(keyboards.FixedRandomNumData.filter(F.number == 66))
+async def handle_target_random_number_callback(
+    callback_query: CallbackQuery,
+    ):
+    await callback_query.answer(
+        text=f'Jackpot 🎉 \n',
+        cache_time=30,
+    )
+
+
+@handler.callback_query(keyboards.FixedRandomNumData.filter())
+async def handle_fixed_random_number_callback(
+    callback_query: CallbackQuery,
+    callback_data: keyboards.FixedRandomNumData,
+    ):
+    await callback_query.answer(
+        text=f'your random number is {callback_data.number}\n'
+        f'callback data: {callback_query.data!r}',
+        show_alert=True,
+        cache_time=30,
+    )
+# ===========================================================

@@ -1,6 +1,8 @@
+from random import randint
 import re
+from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, KeyboardButtonPollType, ReplyKeyboardMarkup, ReplyKeyboardRemove
-from aiogram.utils.keyboard import ReplyKeyboardBuilder
+from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
 
 
 keyboard_start = ReplyKeyboardMarkup(
@@ -67,8 +69,8 @@ def get_actions_kb():
     return builder.as_markup(resize_keyboard=True, one_time_keyboard=True)
 
 
-async def build_info_kb():
-    tg = InlineKeyboardButton(
+async def build_info_inline():
+    drom = InlineKeyboardButton(
         text='канал',
         url='https://novosibirsk.drom.ru/'
     )
@@ -77,10 +79,33 @@ async def build_info_kb():
         url='https://t.me/ren_13_bot'
     )
     rows = [
-        [tg],
+        [drom],
         [tg_01],
     ]
     markup = InlineKeyboardMarkup(inline_keyboard=rows)
     return markup
 
+
+class FixedRandomNumData(CallbackData, prefix='fixed-random-num'):
+    number: int    
+
+
+def build_adtions_kb(random_number_button_text='Random number'):
+    builder = InlineKeyboardBuilder()
+    builder.button(
+        text=random_number_button_text,
+        callback_data='random_num_updated_cb_data'
+    )
+    random_namber = randint(1, 100)
+    cb_data_1 = FixedRandomNumData(number=random_namber)
+    builder.button(
+        text=f'Random number : {random_namber}',
+        callback_data=cb_data_1.pack(),
+    )
+    builder.button(
+        text=f'Random number : [HIDDEN]',
+        callback_data=cb_data_1.pack(),
+    )
+    builder.adjust(1)
+    return builder.as_markup()
 
