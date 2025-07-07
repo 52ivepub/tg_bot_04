@@ -112,23 +112,3 @@ def build_adtions_kb(random_number_button_text='Random number'):
     return builder.as_markup()
 
 
-class ShopActions(IntEnum):
-    products = auto()
-    address = auto()
-
-
-class ShopCbData(CallbackData, prefix='shop'):
-    action:  ShopActions
-
-def build_shop_kb():
-    builder = InlineKeyboardBuilder()
-    builder.button(
-        text='show products',
-        callback_data=ShopCbData(action=ShopActions.products).pack(),
-    )
-    builder.button(
-        text='address',
-        callback_data=ShopCbData(action=ShopActions.address).pack(),
-    )
-    builder.adjust(1)
-    return builder.as_markup()

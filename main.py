@@ -6,6 +6,7 @@ from dotenv import load_dotenv, find_dotenv
 import logging
 from commands_menu import set_commands
 from handlers import handler
+from shop.handler_shop import handler
 
 load_dotenv(find_dotenv())
 

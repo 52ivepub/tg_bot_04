@@ -173,27 +173,3 @@ async def handle_fixed_random_number_callback(
     )
 # ===========================================================
 
-@handler.message(Command('shop'))
-async def send_shop_message_w_kb(message: Message):
-    await message.answer(
-        text='Your shop actions: ',
-        reply_markup=keyboards.build_shop_kb(),
-    )
-
-@handler.callback_query(
-        keyboards.ShopCbData.filter(F.action == keyboards.ShopActions.address)
-)
-async def shop_kb_callback_handlers_address(callback_query: CallbackQuery):
-    await callback_query.answer(
-        text="Your address section is still in progress...",
-        cache_time=30,                                
-                    )
-@handler.callback_query(
-        keyboards.ShopCbData.filter(F.action == keyboards.ShopActions.products)
-)
-async def shop_kb_callback_handlers_products(callback_query: CallbackQuery):
-    await callback_query.answer()
-    await callback_query.message.edit_text(
-        text='Available products:',
-        reply_markup=...,
-        )
