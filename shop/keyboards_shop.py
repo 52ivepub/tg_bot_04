@@ -91,3 +91,24 @@ def product_details_kb(product_cb_data: ProductCallbackData):
         )
     builder.adjust(1,2)
     return builder.as_markup()
+
+
+
+def build_update_product_kb(
+        product_cb_data: ProductCallbackData
+):
+    builder = InlineKeyboardBuilder()
+    builder.button(
+        text=f'⬅️ back to products {product_cb_data.title}',
+        callback_data=ProductCallbackData(
+                action=ProductActions.details,
+                id=product_cb_data.id,
+                title=product_cb_data.title,    
+                price=product_cb_data.price,    
+            ),
+    )
+    builder.button(
+        text="🔃 Update",
+        callback_data="...",
+    )
+    return builder.as_markup()

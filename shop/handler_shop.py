@@ -5,7 +5,7 @@ from aiogram.filters.callback_data import CallbackData
 from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, Message, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from aiogram.utils import markdown
 
-from shop import keyboards_shop
+from shop.keyboards_shop import ProductActions, ProductCallbackData, ShopActions, ShopCbData, build_products_kb, build_shop_kb, build_update_product_kb, product_details_kb
 
 
 handler = Router()
@@ -14,11 +14,11 @@ handler = Router()
 async def send_shop_message_w_kb(message: Message):
     await message.answer(
         text='Your shop actions: ',
-        reply_markup=keyboards_shop.build_shop_kb(),
+        reply_markup=build_shop_kb(),
     )
 
 @handler.callback_query(
-        keyboards_shop.ShopCbData.filter(F.action == keyboards_shop.ShopActions.address)
+        ShopCbData.filter(F.action == ShopActions.address)
 )
 async def shop_kb_callback_handlers_address(callback_query: CallbackQuery):
     await callback_query.answer(
@@ -28,33 +28,33 @@ async def shop_kb_callback_handlers_address(callback_query: CallbackQuery):
     
 
 @handler.callback_query(
-        keyboards_shop.ShopCbData.filter(F.action == keyboards_shop.ShopActions.products)
+        ShopCbData.filter(F.action == ShopActions.products)
 )
 async def shop_kb_callback_handlers_products(callback_query: CallbackQuery):
     await callback_query.answer()
     await callback_query.message.edit_text(
         text='Available products:',
-        reply_markup=keyboards_shop.build_products_kb(),
+        reply_markup=build_products_kb(),
         )
     
 
 @handler.callback_query(
-        keyboards_shop.ShopCbData.filter(F.action == keyboards_shop.ShopActions.root)
+        ShopCbData.filter(F.action == ShopActions.root)
 )
 async def shop_kb_callback_handlers_root(callback_query: CallbackQuery):
     await callback_query.answer()
     await callback_query.message.edit_text(
         text='Your shop actions: ',
-        reply_markup=keyboards_shop.build_shop_kb(),                       
+        reply_markup=build_shop_kb(),                       
                     )
     
 
 @handler.callback_query(
-        keyboards_shop.ProductCallbackData.filter(F.action == keyboards_shop.ProductActions.details)
+        ProductCallbackData.filter(F.action == ProductActions.details)
 )
 async def shop_kb_callback_handlers_details(
     callback_query: CallbackQuery,
-    callback_data: keyboards_shop.ProductCallbackData,
+    callback_data: ProductCallbackData,
  ):
     await callback_query.answer()
     message_text = markdown.text(
@@ -71,5 +71,34 @@ async def shop_kb_callback_handlers_details(
     )
     await callback_query.message.edit_text(
         text=message_text,
-        reply_markup=keyboards_shop.product_details_kb(callback_data),
+        reply_markup=product_details_kb(callback_data),
                     )
+    
+
+
+@handler.callback_query(
+        ProductCallbackData.filter(F.action == ProductActions.delete)
+)
+async def handlers_product_delete_button(
+    callback_query: CallbackQuery,
+):
+
+    await callback_query.answer(
+        text="Delete is still in progress..."
+    )
+
+
+
+@handler.callback_query(
+        ProductCallbackData.filter(F.action == ProductActions.update)
+)
+async def handlers_product_update_button(
+    callback_query: CallbackQuery,
+    callback_data: ProductCallbackData,
+):
+
+    await callback_query.answer()
+    await callback_query.message.edit_reply_markup(
+        reply_markup=build_update_product_kb(callback_data)
+    )
+    
