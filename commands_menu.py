@@ -19,6 +19,9 @@ async def set_commands(bot: Bot):
         BotCommand(
             command='callback', description='callback'
         ),
+        BotCommand(
+            command='survey', description='FSM'
+        ),
      
     ]
 

@@ -5,8 +5,9 @@ from aiogram.enums import ParseMode
 from dotenv import load_dotenv, find_dotenv
 import logging
 from commands_menu import set_commands
-from handlers import handler
-from shop.handler_shop import handler
+# from handlers import handler              ####ОТКЛЮЧИЛ ОСНОВНЫЕ ХЭНДЛЕРЫ
+# from shop.handler_shop import handler
+from FSM.handler_FSM import handler 
 
 load_dotenv(find_dotenv())
 
