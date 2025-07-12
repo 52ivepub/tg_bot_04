@@ -3,10 +3,12 @@ from aiogram import F, Router
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message
+from aiogram.types import Message, ReplyKeyboardRemove
 from aiogram.utils import markdown
 from aiogram.fsm.state import StatesGroup, State
+from email_validator import validate_email, EmailNotValidError
 
+from FSM.keyboard_FSM import build_yes_or_no_keyboard
 
 handler = Router()
 
@@ -16,27 +18,23 @@ handler = Router()
 class Survey(StatesGroup):
     full_name = State()
     email = State()
-
-
-def validate_email(text: str):
-    if "@" not in text or "." not in text:
-        raise ValueError("Invalid email")
-    return text.lower()
+    email_news_later = State()
 
 
 def valid_email_filter(message: Message):
     try:
         email = validate_email(message.text)
-    except ValueError:
+    except EmailNotValidError:
         return None
-    return {"email": email}
+    return {"email": email.normalized}
 
 
 @handler.message(Command('survey'))
 async def handle_start(message: Message, state: FSMContext):
     await state.set_state(Survey.full_name)
     await message.answer(
-        text="Welcome to our weekly survey, Whats your name ?"
+        text="Welcome to our weekly survey, Whats your name ?",
+        reply_markup=ReplyKeyboardRemove(),
     )
 
 
@@ -47,7 +45,7 @@ async def handler_survey_user_full_name(message: Message, state: FSMContext):
     await message.answer(
         f"Hello {markdown.hbold(message.text)}, now please share your email",
         parse_mode=ParseMode.HTML,
-         
+                
     )
 
 @handler.message(Survey.full_name)
@@ -64,8 +62,11 @@ async def handler_survey_user_email(
     state: FSMContext,
     email: str):
     await state.update_data(email=message.text)
+    await state.set_state(Survey.email_news_later)
     await message.answer(
-        text=f"Cool yuor email is now {markdown.hcode(email)}",
+        text=f"Cool yuor email is now {markdown.hcode(email)}\n"
+        "Would you like to be contacted in future", 
+        reply_markup=build_yes_or_no_keyboard()
     )
 
 
@@ -75,3 +76,45 @@ async def handler_survey_invalid_email(
     await message.answer(
         text=f"Invalid email", 
     )
+
+
+async def send_survey_result(message: Message, data):
+    text = markdown.text(
+        "your survey results",
+        "",
+        markdown.text("Name:", markdown.hbold(data["full_name"])),
+        markdown.text("Email:", markdown.hcode(data["email"])),
+        (   "Cool"
+            if data["newsletter_ok"] 
+            else " And won't bother you again "
+        ),
+        sep="\n"
+    )
+    await message.answer(text=text,
+                         reply_markup=ReplyKeyboardRemove())
+
+
+@handler.message(Survey.email_news_later, F.text.casefold() == "yes")
+async def handle_survey_email_newsletter_ok(message: Message, state: FSMContext):
+    data = await state.update_data(newsletter_ok=True) 
+    await state.clear()
+    await send_survey_result(message, data)
+
+
+@handler.message(Survey.email_news_later, F.text.casefold() == "no")
+async def handle_survey_email_newsletter_not(message: Message, state: FSMContext):
+    data = await state.update_data(newsletter_ok=False) 
+    await state.clear() 
+    await send_survey_result(message, data)
+
+
+@handler.message(Survey.email_news_later)
+async def handle_survey_email_newsletter_understand(message: Message):
+    await message.answer("Sorry i didn't understand",
+                         reply_markup=build_yes_or_no_keyboard()
+                         )
+
+
+
+
+
