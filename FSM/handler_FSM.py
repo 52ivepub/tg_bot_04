@@ -124,8 +124,3 @@ async def handle_survey_email_newsletter_understand(message: Message):
     await message.answer("Sorry i didn't understand",
                          reply_markup=build_yes_or_no_keyboard()
                          )
-
-
-
-
-
