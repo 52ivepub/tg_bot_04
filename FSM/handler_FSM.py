@@ -8,25 +8,15 @@ from aiogram.utils import markdown
 from aiogram.fsm.state import StatesGroup, State
 from email_validator import validate_email, EmailNotValidError
 
-from FSM.keyboard_FSM import build_yes_or_no_keyboard
+from FSM.keyboard_FSM import build_yes_or_no_keyboard, valid_email_filter, valid_email, valid_email_message_text
 
 handler = Router()
-
-
 
 
 class Survey(StatesGroup):
     full_name = State()
     email = State()
     email_news_later = State()
-
-
-def valid_email_filter(message: Message):
-    try:
-        email = validate_email(message.text)
-    except EmailNotValidError:
-        return None
-    return {"email": email.normalized}
 
 
 @handler.message(Command('survey'))
@@ -56,7 +46,7 @@ async def handle_survey_user_full_name_invalid_content_type(message: Message, st
     )
 
 
-@handler.message(Survey.email, valid_email_filter)
+@handler.message(Survey.email, F.text.cast(validate_email).normalized.as_("email"))
 async def handler_survey_user_email(
     message: Message,
     state: FSMContext,
@@ -76,6 +66,27 @@ async def handler_survey_invalid_email(
     await message.answer(
         text=f"Invalid email", 
     )
+
+
+# @handler.message(Survey.email)
+# async def handler_my_option(
+#     message: Message,
+#     state: FSMContext,
+#     ):
+#     await state.update_data(email=message.text)
+#     await state.set_state(Survey.email_news_later)
+#     try:
+#         validate_email(message.text)
+#         return await message.answer(
+#             text=f"Cool yuor email is now {markdown.hcode(email)}\n"
+#             "Would you like to be contacted in future", 
+#             reply_markup=build_yes_or_no_keyboard()
+#         )
+#     except:
+#         await message.answer(
+#         text=f"Invalid email", 
+#     )
+
 
 
 async def send_survey_result(message: Message, data):
