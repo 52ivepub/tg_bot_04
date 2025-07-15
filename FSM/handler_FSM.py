@@ -1,25 +1,22 @@
+from FSM.states import Survey
 import email
+import logging
 from aiogram import F, Router
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import any_state, default_state
 from aiogram.types import Message, ReplyKeyboardRemove
 from aiogram.utils import markdown
-from aiogram.fsm.state import StatesGroup, State
 from email_validator import validate_email, EmailNotValidError
+
 
 from FSM.keyboard_FSM import build_yes_or_no_keyboard, valid_email_filter, valid_email, valid_email_message_text
 
-handler = Router()
+handler_FSM = Router()
 
 
-class Survey(StatesGroup):
-    full_name = State()
-    email = State()
-    email_news_later = State()
-
-
-@handler.message(Command('survey'))
+@handler_FSM.message(Command('survey'), default_state)
 async def handle_start(message: Message, state: FSMContext):
     await state.set_state(Survey.full_name)
     await message.answer(
@@ -28,7 +25,26 @@ async def handle_start(message: Message, state: FSMContext):
     )
 
 
-@handler.message(Survey.full_name, F.text)
+@handler_FSM.message(Command("cancel"))
+@handler_FSM.message(F.text.casefold() == "cancel")
+async def cancel_handler(message: Message, state: FSMContext):
+    current_state = await state.get_state()
+    if current_state is None:
+        await message.reply(text="ok, but nothing was going on",
+                            reply_markup=ReplyKeyboardRemove()
+                            )
+        return
+    
+    logging.info("Canceling survey %r", current_state)
+    await state.clear()
+    await message.answer(
+        text=f"Cancelled survey state {current_state} start again /survey",
+        reply_markup=ReplyKeyboardRemove(),
+    )
+
+
+# ==================FULL_NAME===================================
+@handler_FSM.message(Survey.full_name, F.text)
 async def handler_survey_user_full_name(message: Message, state: FSMContext):
     await state.update_data(full_name=message.text)
     await state.set_state(Survey.email)
@@ -38,21 +54,24 @@ async def handler_survey_user_full_name(message: Message, state: FSMContext):
                 
     )
 
-@handler.message(Survey.full_name)
+@handler_FSM.message(Survey.full_name)
 async def handle_survey_user_full_name_invalid_content_type(message: Message, state: FSMContext):
     await state.clear()
     await message.answer(
         "Sorry, I didn't understand, send your full name as text"
     )
 
+# ==========================================================================
 
-@handler.message(Survey.email, F.text.cast(validate_email).normalized.as_("email"))
+
+# ==================EMAIL===================================
+@handler_FSM.message(Survey.email, F.text.cast(validate_email).normalized.as_("email"))
 async def handler_survey_user_email(
     message: Message,
     state: FSMContext,
     email: str):
     await state.update_data(email=message.text)
-    await state.set_state(Survey.email_news_later)
+    await state.set_state(Survey.sport)
     await message.answer(
         text=f"Cool yuor email is now {markdown.hcode(email)}\n"
         "Would you like to be contacted in future", 
@@ -60,34 +79,13 @@ async def handler_survey_user_email(
     )
 
 
-@handler.message(Survey.email)
+@handler_FSM.message(Survey.email)
 async def handler_survey_invalid_email(
     message: Message):
     await message.answer(
         text=f"Invalid email", 
     )
-
-
-# @handler.message(Survey.email)
-# async def handler_my_option(
-#     message: Message,
-#     state: FSMContext,
-#     ):
-#     await state.update_data(email=message.text)
-#     await state.set_state(Survey.email_news_later)
-#     try:
-#         validate_email(message.text)
-#         return await message.answer(
-#             text=f"Cool yuor email is now {markdown.hcode(email)}\n"
-#             "Would you like to be contacted in future", 
-#             reply_markup=build_yes_or_no_keyboard()
-#         )
-#     except:
-#         await message.answer(
-#         text=f"Invalid email", 
-#     )
-
-
+# ==========================================================================
 
 async def send_survey_result(message: Message, data):
     text = markdown.text(
@@ -105,22 +103,26 @@ async def send_survey_result(message: Message, data):
                          reply_markup=ReplyKeyboardRemove())
 
 
-@handler.message(Survey.email_news_later, F.text.casefold() == "yes")
+# ==================EMAIL_NEWS_LATER===================================
+@handler_FSM.message(Survey.email_news_later, F.text.casefold() == "yes")
 async def handle_survey_email_newsletter_ok(message: Message, state: FSMContext):
     data = await state.update_data(newsletter_ok=True) 
     await state.clear()
     await send_survey_result(message, data)
 
 
-@handler.message(Survey.email_news_later, F.text.casefold() == "no")
+@handler_FSM.message(Survey.email_news_later, F.text.casefold() == "no")
 async def handle_survey_email_newsletter_not(message: Message, state: FSMContext):
     data = await state.update_data(newsletter_ok=False) 
     await state.clear() 
     await send_survey_result(message, data)
 
 
-@handler.message(Survey.email_news_later)
+@handler_FSM.message(Survey.email_news_later)
 async def handle_survey_email_newsletter_understand(message: Message):
     await message.answer("Sorry i didn't understand",
                          reply_markup=build_yes_or_no_keyboard()
                          )
+# ==========================================================================
+
+

@@ -1,4 +1,3 @@
-from calendar import c
 from aiogram import F, Bot, Router
 from aiogram.filters import Command
 from aiogram.filters.callback_data import CallbackData
@@ -8,16 +7,16 @@ from aiogram.utils import markdown
 from shop.keyboards_shop import ProductActions, ProductCallbackData, ShopActions, ShopCbData, build_products_kb, build_shop_kb, build_update_product_kb, product_details_kb
 
 
-handler = Router()
+handler_shop = Router()
 
-@handler.message(Command('shop'))
+@handler_shop.message(Command('shop'))
 async def send_shop_message_w_kb(message: Message):
     await message.answer(
         text='Your shop actions: ',
         reply_markup=build_shop_kb(),
     )
 
-@handler.callback_query(
+@handler_shop.callback_query(
         ShopCbData.filter(F.action == ShopActions.address)
 )
 async def shop_kb_callback_handlers_address(callback_query: CallbackQuery):
@@ -27,7 +26,7 @@ async def shop_kb_callback_handlers_address(callback_query: CallbackQuery):
                     )
     
 
-@handler.callback_query(
+@handler_shop.callback_query(
         ShopCbData.filter(F.action == ShopActions.products)
 )
 async def shop_kb_callback_handlers_products(callback_query: CallbackQuery):
@@ -38,7 +37,7 @@ async def shop_kb_callback_handlers_products(callback_query: CallbackQuery):
         )
     
 
-@handler.callback_query(
+@handler_shop.callback_query(
         ShopCbData.filter(F.action == ShopActions.root)
 )
 async def shop_kb_callback_handlers_root(callback_query: CallbackQuery):
@@ -49,7 +48,7 @@ async def shop_kb_callback_handlers_root(callback_query: CallbackQuery):
                     )
     
 
-@handler.callback_query(
+@handler_shop.callback_query(
         ProductCallbackData.filter(F.action == ProductActions.details)
 )
 async def shop_kb_callback_handlers_details(
@@ -76,7 +75,7 @@ async def shop_kb_callback_handlers_details(
     
 
 
-@handler.callback_query(
+@handler_shop.callback_query(
         ProductCallbackData.filter(F.action == ProductActions.delete)
 )
 async def handlers_product_delete_button(
@@ -89,7 +88,7 @@ async def handlers_product_delete_button(
 
 
 
-@handler.callback_query(
+@handler_shop.callback_query(
         ProductCallbackData.filter(F.action == ProductActions.update)
 )
 async def handlers_product_update_button(

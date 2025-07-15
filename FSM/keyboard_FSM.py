@@ -1,4 +1,4 @@
-from ctypes import resize
+from typing import Iterable
 from aiogram.types import Message, ReplyKeyboardMarkup
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 from email_validator import validate_email, EmailNotValidError
@@ -31,3 +31,10 @@ def valid_email(text):
 def valid_email_message_text(message: Message):
     return valid_email(message.text)
 
+
+def build_select_keyboard(options: Iterable[str]):
+    builder = ReplyKeyboardBuilder()
+    for option in options:
+        builder.button(text="")
+    builder.adjust(1)
+    return builder.as_markup(resize_keyboard=True)
