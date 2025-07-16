@@ -35,6 +35,6 @@ def valid_email_message_text(message: Message):
 def build_select_keyboard(options: Iterable[str]):
     builder = ReplyKeyboardBuilder()
     for option in options:
-        builder.button(text="")
+        builder.button(text=option)
     builder.adjust(1)
     return builder.as_markup(resize_keyboard=True)

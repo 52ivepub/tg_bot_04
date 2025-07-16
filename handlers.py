@@ -1,9 +1,11 @@
 import asyncio
 import io
+import logging
 from aiogram import F, Bot, Router
 from aiogram import types
 from aiogram.enums import ChatAction
 from aiogram.filters import Command
+from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, Message, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from aiogram.utils.chat_action import ChatActionSender
 import aiohttp
@@ -173,3 +175,23 @@ async def handle_fixed_random_number_callback(
     )
 # ===========================================================
 
+
+# ====================CANCEL===========================================
+@handler.message(Command("cancel"))
+@handler.message(F.text.casefold() == "cancel")
+async def cancel_handler(message: Message, state: FSMContext):
+    current_state = await state.get_state()
+    if current_state is None:
+        await message.reply(text="ok, but nothing was going on",
+                            reply_markup=ReplyKeyboardRemove()
+                            )
+        return
+    
+    logging.info("Canceling survey %r", current_state)
+    await state.clear()
+    await message.answer(
+        text=f"Cancelled survey state {current_state}",
+        reply_markup=ReplyKeyboardRemove(),
+    )
+
+# ===========================================================

@@ -1,17 +1,17 @@
-from FSM.states import Survey
+from FSM.states import KnowF1Tracks, KnowSports, SportDetails, Survey
 import email
 import logging
 from aiogram import F, Router
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import any_state, default_state
+from aiogram.fsm.state import State, any_state, default_state
 from aiogram.types import Message, ReplyKeyboardRemove
 from aiogram.utils import markdown
 from email_validator import validate_email, EmailNotValidError
 
 
-from FSM.keyboard_FSM import build_yes_or_no_keyboard, valid_email_filter, valid_email, valid_email_message_text
+from FSM.keyboard_FSM import build_select_keyboard, build_yes_or_no_keyboard, valid_email_filter, valid_email, valid_email_message_text
 
 handler_FSM = Router()
 
@@ -25,8 +25,8 @@ async def handle_start(message: Message, state: FSMContext):
     )
 
 
-@handler_FSM.message(Command("cancel"))
-@handler_FSM.message(F.text.casefold() == "cancel")
+@handler_FSM.message(Command("cancel"), Survey())
+@handler_FSM.message(F.text.casefold() == "cancel", Survey())
 async def cancel_handler(message: Message, state: FSMContext):
     current_state = await state.get_state()
     if current_state is None:
@@ -74,8 +74,8 @@ async def handler_survey_user_email(
     await state.set_state(Survey.sport)
     await message.answer(
         text=f"Cool yuor email is now {markdown.hcode(email)}\n"
-        "Would you like to be contacted in future", 
-        reply_markup=build_yes_or_no_keyboard()
+        "Which sport would your prefer ?", 
+        reply_markup=build_select_keyboard(KnowSports),
     )
 
 
@@ -83,7 +83,7 @@ async def handler_survey_user_email(
 async def handler_survey_invalid_email(
     message: Message):
     await message.answer(
-        text=f"Invalid email", 
+        text=f"Invalid email. Cancel survey, Tab /cancel", 
     )
 # ==========================================================================
 
@@ -126,3 +126,49 @@ async def handle_survey_email_newsletter_understand(message: Message):
 # ==========================================================================
 
 
+# ==================SPORT===================================
+know_sport_to_next: dict[KnowSports, tuple[State, str]] = {
+    KnowSports.tennis: (
+        SportDetails.tennis,
+        "Who is your favorite tennis player ?"
+    ),
+    KnowSports.footbal: (
+        SportDetails.footbal,
+        "What is your favorite footbal team ?"
+    ),
+    KnowSports.formaule_one: (
+        SportDetails.formaule_one,
+        "What is your favorite formula track ?"
+    ),
+}
+
+know_sport_to_kb: dict = {
+    KnowSports.formaule_one: build_select_keyboard(KnowF1Tracks),
+}
+
+@handler_FSM.message(
+        Survey.sport,
+        F.text.cast(KnowSports),
+        # F.text == SportDetails, 
+        )
+async def select_sport(message: Message, state: FSMContext):
+    await state.update_data(sport=message.text)
+    next_state, question_text = know_sport_to_next[message.text]
+    await state.set_state(next_state)
+    kb = ReplyKeyboardRemove()
+    if message.text in know_sport_to_kb:
+        kb = know_sport_to_kb[message.text]
+    await message.answer(
+        text=question_text,
+        reply_markup=kb,
+    )
+
+
+
+@handler_FSM.message(Survey.sport)
+async def select_sport(message: Message):
+    await message.answer(
+        text="Unknown sport, please select one of the following:",
+        reply_markup=build_select_keyboard(KnowSports),
+    )
+# ==========================================================================
