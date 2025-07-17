@@ -3,7 +3,7 @@ import email
 import logging
 from aiogram import F, Router
 from aiogram.enums import ParseMode
-from aiogram.filters import Command
+from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, any_state, default_state
 from aiogram.types import Message, ReplyKeyboardRemove
@@ -25,15 +25,10 @@ async def handle_start(message: Message, state: FSMContext):
     )
 
 
-@handler_FSM.message(Command("cancel"), Survey())
-@handler_FSM.message(F.text.casefold() == "cancel", Survey())
+@handler_FSM.message(Command("cancel"), StateFilter(Survey(), SportDetails()))
+@handler_FSM.message(F.text.casefold() == "cancel", StateFilter(Survey(), SportDetails()))
 async def cancel_handler(message: Message, state: FSMContext):
     current_state = await state.get_state()
-    if current_state is None:
-        await message.reply(text="ok, but nothing was going on",
-                            reply_markup=ReplyKeyboardRemove()
-                            )
-        return
     
     logging.info("Canceling survey %r", current_state)
     await state.clear()
@@ -65,7 +60,12 @@ async def handle_survey_user_full_name_invalid_content_type(message: Message, st
 
 
 # ==================EMAIL===================================
-@handler_FSM.message(Survey.email, F.text.cast(validate_email).normalized.as_("email"))
+@handler_FSM.message(
+        Survey.email,
+        F.text.cast(validate_email).normalized.as_("email"),
+        # F.text.cast(valid_email).normalized.as_("email"),   # МОЖНО ТАК
+        # F.func(valid_email_message_text).as_("email")       # МОЖНО И  ТАК
+        )
 async def handler_survey_user_email(
     message: Message,
     state: FSMContext,
@@ -146,10 +146,7 @@ know_sport_to_kb: dict = {
     KnowSports.formaule_one: build_select_keyboard(KnowF1Tracks),
 }
 
-@handler_FSM.message(
-        Survey.sport,
-        F.text.cast(KnowSports),
-        # F.text == SportDetails, 
+@handler_FSM.message(Survey.sport, F.text.cast(KnowSports),
         )
 async def select_sport(message: Message, state: FSMContext):
     await state.update_data(sport=message.text)
@@ -162,13 +159,33 @@ async def select_sport(message: Message, state: FSMContext):
         text=question_text,
         reply_markup=kb,
     )
-
+ 
 
 
 @handler_FSM.message(Survey.sport)
-async def select_sport(message: Message):
+async def select_sport_invalid_choice(message: Message):
     await message.answer(
         text="Unknown sport, please select one of the following:",
         reply_markup=build_select_keyboard(KnowSports),
     )
+
+
+@handler_FSM.message(F.text,
+                    StateFilter(SportDetails.tennis, SportDetails.footbal),
+                     )
+async def handle_selected_sport_details_option(
+        message: Message,
+        state: FSMContext):
+    await state.update_data(sport_details=message.text)
+
+
+
+
 # ==========================================================================
+
+
+
+
+
+
+
