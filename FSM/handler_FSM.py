@@ -93,6 +93,9 @@ async def send_survey_result(message: Message, data):
         "",
         markdown.text("Name:", markdown.hbold(data["full_name"])),
         markdown.text("Email:", markdown.hcode(data["email"])),
+        "",
+        markdown.text("Preferred sport:", markdown.hbold(data["sport"])),
+        markdown.text("Q:", markdown.hbold(data["sport_answer"])), 
         (   "Cool"
             if data["newsletter_ok"] 
             else " And won't bother you again "
@@ -142,6 +145,7 @@ know_sport_to_next: dict[KnowSports, tuple[State, str]] = {
     ),
 }
 
+know_f1_tracks_kb = build_select_keyboard(KnowF1Tracks)
 know_sport_to_kb: dict = {
     KnowSports.formaule_one: build_select_keyboard(KnowF1Tracks),
 }
@@ -149,8 +153,8 @@ know_sport_to_kb: dict = {
 @handler_FSM.message(Survey.sport, F.text.cast(KnowSports),
         )
 async def select_sport(message: Message, state: FSMContext):
-    await state.update_data(sport=message.text)
     next_state, question_text = know_sport_to_next[message.text]
+    await state.update_data(sport=message.text, sport_question=question_text)
     await state.set_state(next_state)
     kb = ReplyKeyboardRemove()
     if message.text in know_sport_to_kb:
@@ -170,15 +174,34 @@ async def select_sport_invalid_choice(message: Message):
     )
 
 
-@handler_FSM.message(F.text,
-                    StateFilter(SportDetails.tennis, SportDetails.footbal),
-                     )
+@handler_FSM.message(F.text, StateFilter(SportDetails.tennis, SportDetails.footbal))
+@handler_FSM.message(F.text.cast(KnowF1Tracks), SportDetails.formaule_one)
 async def handle_selected_sport_details_option(
         message: Message,
         state: FSMContext):
-    await state.update_data(sport_details=message.text)
+    await state.update_data(sport_answer=message.text)
+    await state.set_state(Survey.email_news_later)
+    await message.answer(text="Would your like be notified about this sport ?\n"
+                         "This is last step, but you can /cancel any time",
+                         reply_markup=build_yes_or_no_keyboard())
 
 
+@handler_FSM.message(SportDetails.tennis)
+async def handle_tennis_player_not_text(message: Message):
+    await message.answer("Please name tennis-player using text")
+
+
+@handler_FSM.message(SportDetails.footbal)
+async def handle_footbal_team_not_text(message: Message):
+    await message.answer("Please name footbal-team using text")
+
+
+@handler_FSM.message(SportDetails.formaule_one)
+async def handle_formula_one_not_of_tracks(message: Message):
+    await message.answer(
+        text="Please select one of known F1 tracks",
+        reply_markup=know_f1_tracks_kb,
+    )
 
 
 # ==========================================================================
